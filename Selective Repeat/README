@@ -1,0 +1,43 @@
+I. LIST OF FILES:
+	1) client.c
+	2) server.c
+	3) packet.c and packet.h: Contain definition of packet structure and other useful utility functions
+	4) priority_queue.c and priority_queue.h: ADT for a priority queue implemented as a binary min-heap. This is used to simulate the sliding 		   windows in the server and client based on the packet's sequence numbers.
+	5) relay.h 
+
+II. INSTRUCTIONS TO EXECUTE THE CODE:
+	1) Place the file to be transmitted by the client in the current folder.
+	2) Set the values of SERVER_PORT, SERVER_IP, CLIENT_PORT, CLIENT_IP, RELAY_PORT0, RELAY_PORT1, RELAY_IP  according to your system 		   requirements in packet.h
+	3) Open 4 terminals one each for server, client, relay0 and relay1.
+	4) For the server terminal, compile the code as:
+		gcc server.c packet.c priority_queue.c -o server -lpthread
+	5) For the client terminal,compile the code as:
+		gcc client.c packet.c priority_queue.c -o client -lpthread
+	6) For the relay0 terminal,compile the code as:
+		gcc relay.c packet.c -o relay0 -lpthread
+	7) For the relay1 terminal,compile the code as:
+		gcc relay.c packet.c -o relay1 -lpthread			
+	8) Execute the server on the server terminal as ./server <output_file_name> where <output_file_name> denotes the file to which 		      		   the file from the client is written to. For example:
+		./server out.txt
+	9) Execute the relay0 as:
+		./relay0 0
+	10) 8) Execute the relay1 as:
+		./relay1 1		
+	11) Execute the client on the client terminal as ./client <input_file_name> where <input_file_name> denotes the file to be sent to the 		    server. For example:
+		./client input.txt
+	12) Observe the output in the file log.txt, and in the respective terminals.
+	13) Experiment with different values of PACKETSIZE and WINDOWSIZE in packet.h, PDR in relay.c and TIMEOUT in client.c.
+	
+III. METHODOLOGY:
+
+	1) client.c: Multithreading is used.Both the sender and the reciever run on different threads, but on the same socket. The socket has it's 		   own timer, by setting the socket options with setsockopt().Therefore, effectively a single timer is used for the whole sliding window. The 		   sliding window is implemented as a priority queue. All packets which are sent to the relays, but for which ACK packet hasn't been recieved 		   yet are present in the priority queue.If a timeout happens,all the packets in the priority queue are resent again on their respective 		   channels. The client stops when the whole input file is read and the priority queue is empty.
+	
+	   Also, all sequence numbers are assigned packet-wise unlike in Question 1, where the sequence numbers were assigned byte-wise.
+	
+	2) server.c: The sliding window is implemented as a priority queue. All packets which have been recieved from the relays, but haven't yet 		   been written to the temporary character buffer are present in the priority queue. A packet recieved is first inserted into the priority 		   queue. Then, if the top elements of the queue are in order with what is expected to be written to the character buffer, the priority queue 		   is emptied accordingly to the character buffer. In this way, out of order packets are dealt with.Whenever the character buffer gets filled 		   up, it is emptied into the output file. The ACK packet is sent back randomly to either of the 2 relays. The server stops when all the 		   packets are written to the character buffer.
+	
+	3) relay.c: 2 processes for each of the relays. The relays just accept a packet from the server and forward it to the client and vice-versa. 		   Appropriate delays and packet drops taken care of. The relays have an infinite loop as a relay node has no way of knowing when 		   communication between client and server stops in an UDP connection.
+	
+	3) All other functionalities are explained as comments in the source code files. 
+	
+IV. NOTE: Since, all 4 processes use the same log file and there is no synchronization among the processes, occassionally one process may overwrite 		  another process's output. So, the output on the terminals are more correct than output of the log file.	
