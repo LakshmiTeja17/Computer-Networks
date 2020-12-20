@@ -1,0 +1,29 @@
+I. LIST OF FILES:
+	1) client.c
+	2) server.c
+	3) packet.c and packet.h: Contain definition of packet structure and other useful utility functions
+	4) priority_queue.c and priority_queue.h: ADT for a priority queue implemented as a binary min-heap. This is used to maintain the temporary 		   buffer in the server based on the packet's sequence numbers. 
+
+II. INSTRUCTIONS TO EXECUTE THE CODE:
+	1) Place the file to be transmitted by the client in the current folder.
+	2) Set the values of SERVER_PORT, SERVER_IP according to your system requirements in packet.h
+	3) Open 2 terminals one each for server and client.
+	4) For the server terminal, compile the code as:
+		gcc server.c packet.c priority_queue.c -o server -lpthread
+	5) For the client terminal,compile the code as:
+		gcc client.c packet.c -o client -lpthread
+	6) Execute the server on the server terminal as ./server <output_file_name> where <output_file_name> denotes the file to which 		      		   the file from the client is written to. For example:
+		./server out.txt
+	7) Execute the client on the client terminal as ./client <input_file_name> where <input_file_name> denotes the file to be sent to the server. 		   For example:
+		./client input.txt
+	8) Ensure that server is executed before the client! Or else, client exits with error as it would not be able to establish a TCP connection.
+	9) Observe the output on the respective terminals.
+	10) Experiment with different values of PACKETSIZE in packet.h, PDR in server.c and TIMEOUT in client.c
+	
+III. METHODOLOGY:
+
+	1) client.c: 2 sockets are created on the client's side for each of the 2 channels. Multithreading is used.Each socket is run on a different 		   thread. Each socket has it's own timer, by setting the socket options with setsockopt().Therefore, effectively 2 timers are implemented.If 		   a packet is dropped and a timeout happens,the packet is resent again on the same channel.
+	
+	2) server.c: 2 sockets are created on the server's side for each of the 2 channels. Multithreading is used.Each socket is run on a different 		   thread. The temporary buffer is implemented as a priority queue. A packet recieved is first inserted into the priority queue. Then, if the 		   top elements of the queue are in order with what is expected to be written to the file, the priority queue is emptied accordingly to the 		   file. In this way, out of order packets are dealt with.
+	
+	3) All other functionalities are explained as comments in the source code files. 
